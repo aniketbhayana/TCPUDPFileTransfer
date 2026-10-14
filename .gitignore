@@ -1,0 +1,19 @@
+# Bytecode and build output
+bin/
+*.class
+
+# Transferred received files from benchmark runs
+received/tcp/*
+!received/tcp/.gitkeep
+received/udp/*
+!received/udp/.gitkeep
+
+# Deterministic test binaries (re-generated automatically via runner)
+test-files/*.bin
+!test-files/.gitkeep
+
+# IDE and OS metadata
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
