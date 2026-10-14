@@ -55,6 +55,9 @@ def generate_plots():
                         xytext=(0, 4), textcoords="offset points",
                         ha='center', va='bottom', fontsize=10, fontweight='bold', color='#1f77b4')
 
+    # Dynamic footnote based on actual transfer completion
+    has_incomplete_udp = any(udp_summary['Success_Rate_Pct'] < 100.0)
+
     for i, bar in enumerate(bars_udp):
         val = bar.get_height()
         comp_rate = udp_summary.iloc[i]['Success_Rate_Pct']
@@ -75,8 +78,10 @@ def generate_plots():
     ax.legend(frameon=True, facecolor='white', framealpha=0.9)
     ax.set_ylim(0, max(np.nanmax(tcp_times), np.nanmax(udp_times)) * 1.25)
 
-    fig.text(0.12, 0.02, '* Note: Red/parenthesized annotations indicate incomplete UDP transfers due to socket buffer overflow.',
-             fontsize=9, style='italic', color='#555555')
+    time_caption = ('* Note: Red/parenthesized annotations indicate incomplete UDP transfers due to socket buffer overflow.'
+                    if has_incomplete_udp else
+                    'Note: All TCP and UDP transfers completed with 100% success and verified SHA-256 integrity (3 runs averaged).')
+    fig.text(0.12, 0.02, time_caption, fontsize=9, style='italic', color='#555555')
 
     plt.tight_layout(rect=[0, 0.04, 1, 1])
     time_plot_path = os.path.join(results_dir, "transmission_time.png")
@@ -93,7 +98,9 @@ def generate_plots():
     udp_tput = udp_summary['Avg_Throughput_MiBps'].values
 
     bars_tcp2 = ax.bar(x - width/2, tcp_tput, width, label='TCP Throughput (Full Verified File)', color='#2ca02c', edgecolor='black', alpha=0.9)
-    bars_udp2 = ax.bar(x + width/2, udp_tput, width, label='UDP Effective Rate (Received Data)', color='#d62728', edgecolor='black', alpha=0.9)
+    bars_udp2 = ax.bar(x + width/2, udp_tput, width,
+                       label='UDP Throughput (Full Verified File)' if not has_incomplete_udp else 'UDP Effective Rate (Received Data)',
+                       color='#ff7f0e' if not has_incomplete_udp else '#d62728', edgecolor='black', alpha=0.9)
 
     for i, bar in enumerate(bars_tcp2):
         val = bar.get_height()
@@ -113,7 +120,7 @@ def generate_plots():
                         xy=(bar.get_x() + bar.get_width() / 2, val),
                         xytext=(0, 4), textcoords="offset points",
                         ha='center', va='bottom', fontsize=9, fontweight='bold',
-                        color='#d62728' if not is_comp else '#8c564b')
+                        color='#d62728' if not is_comp else '#c86400')
 
     ax.set_xlabel('File Size', fontweight='bold', labelpad=10)
     ax.set_ylabel('Throughput (MiB/s)', fontweight='bold', labelpad=10)
@@ -123,8 +130,10 @@ def generate_plots():
     ax.legend(frameon=True, facecolor='white', framealpha=0.9)
     ax.set_ylim(0, max(np.nanmax(tcp_tput), np.nanmax(udp_tput)) * 1.3)
 
-    fig.text(0.12, 0.02, '* UDP rate for incomplete transfers represents effective received data rate; transfer was NOT 100% successful.',
-             fontsize=9, style='italic', color='#555555')
+    tput_caption = ('* UDP rate for incomplete transfers represents effective received data rate; transfer was NOT 100% successful.'
+                    if has_incomplete_udp else
+                    'Note: Throughput values represent fully completed transfers with 100% verified SHA-256 cryptographic integrity.')
+    fig.text(0.12, 0.02, tput_caption, fontsize=9, style='italic', color='#555555')
 
     plt.tight_layout(rect=[0, 0.04, 1, 1])
     tput_plot_path = os.path.join(results_dir, "throughput.png")

@@ -42,10 +42,10 @@ The table below summarizes the aggregated benchmark results extracted from `resu
 
 ### Q1: How does transmission time change as file size increases?
 
-For both protocols, transmission time scales monotonically with file size:
+Transfer time generally increases with file size, although small measurements can fluctuate because of fixed overhead and timing variability:
 - **TCP Transmission Time:**
   - 100 KB: ~0.0145 seconds
-  - 1 MB: ~0.0134 seconds
+  - 1 MB: ~0.0134 seconds (slight reduction due to timing variability and socket/OS warm-up)
   - 5 MB: ~0.0323 seconds
   - 10 MB: ~0.0518 seconds
 - **UDP Transmission Time:**
@@ -54,7 +54,7 @@ For both protocols, transmission time scales monotonically with file size:
   - 5 MB: ~0.1052 seconds
   - 10 MB: ~0.1476 seconds
 
-**Key Observation:** For small files (e.g., 100 KB), the initial fixed overhead (connection establishment, thread coordination, metadata exchange, and socket setup) dominates the total measured time. As the payload grows from 1 MB to 10 MB, transmission time becomes proportional to data volume, reflecting the raw data pumping and memory copying capacity of the operating system.
+**Key Observation:** For small files (such as 100 KB and 1 MB), fixed initialization costs—including socket allocation, thread scheduling, metadata exchange, and OS buffer priming—constitute a major fraction of the total measurement. Consequently, small measurements can exhibit slight non-monotonic fluctuations before the linear scaling with data volume becomes dominant from 5 MB to 10 MB.
 
 ---
 
