@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Computer Networks Lab Report: TCP vs UDP File Transfer</title>
+<style>
+    @page {
+        size: A4;
+        margin: 16mm 14mm 16mm 14mm;
+        @bottom-right {
+            content: "Page " counter(page);
+        }
+    }
+    body {
+        font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+        color: #222;
+        line-height: 1.45;
+        font-size: 10.5pt;
+        margin: 0;
+        padding: 0;
+    }
+    .header-box {
+        text-align: center;
+        border-bottom: 2px solid #1a365d;
+        padding-bottom: 10px;
+        margin-bottom: 18px;
+    }
+    h1 {
+        font-size: 16pt;
+        color: #1a365d;
+        margin: 0 0 5px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .sub-title {
+        font-size: 11.5pt;
+        color: #4a5568;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+    }
+    .meta-table {
+        width: 100%;
+        margin-top: 8px;
+        border-collapse: collapse;
+        font-size: 9.5pt;
+    }
+    .meta-table td {
+        padding: 2px 0;
+        border: none;
+    }
+    h2 {
+        font-size: 12.5pt;
+        color: #2b6cb0;
+        border-left: 4px solid #2b6cb0;
+        padding-left: 8px;
+        margin-top: 18px;
+        margin-bottom: 8px;
+        page-break-after: avoid;
+    }
+    h3 {
+        font-size: 10.5pt;
+        color: #2d3748;
+        margin-top: 12px;
+        margin-bottom: 4px;
+        page-break-after: avoid;
+    }
+    p, li {
+        text-align: justify;
+        margin-top: 3px;
+        margin-bottom: 6px;
+    }
+    ul, ol {
+        margin-top: 3px;
+        margin-bottom: 8px;
+        padding-left: 20px;
+    }
+    table.data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0 14px 0;
+        font-size: 9pt;
+        page-break-inside: avoid;
+    }
+    table.data-table th, table.data-table td {
+        border: 1px solid #cbd5e0;
+        padding: 5px 7px;
+        text-align: center;
+    }
+    table.data-table th {
+        background-color: #ebf8ff;
+        color: #2b6cb0;
+        font-weight: 700;
+    }
+    table.data-table tr:nth-child(even) {
+        background-color: #f7fafc;
+    }
+    .chart-container {
+        text-align: center;
+        margin: 10px 0;
+        page-break-inside: avoid;
+    }
+    .chart-container img {
+        max-width: 82%;
+        height: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+    }
+    .chart-caption {
+        font-size: 8.5pt;
+        color: #4a5568;
+        font-style: italic;
+        margin-top: 3px;
+    }
+    .code-box {
+        background-color: #edf2f7;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-family: Consolas, 'Courier New', monospace;
+        font-size: 8.5pt;
+        white-space: pre-wrap;
+        margin: 6px 0;
+    }
+    .page-break {
+        page-break-before: always;
+    }
+</style>
+</head>
+<body>
+
+<div class="header-box">
+    <h1>DEPARTMENT OF COMPUTER SCIENCE &amp; ENGINEERING</h1>
+    <div class="sub-title">Computer Networks Laboratory Record</div>
+    <table class="meta-table">
+        <tr>
+            <td><strong>Course Code:</strong> CS3002</td>
+            <td><strong>Experiment No:</strong> 04</td>
+            <td><strong>Date of Conduction:</strong> 14-Oct-2026</td>
+        </tr>
+        <tr>
+            <td><strong>Platform:</strong> Java Sockets (Java 21, Windows 11)</td>
+            <td><strong>Host:</strong> Localhost (127.0.0.1)</td>
+            <td><strong>Status:</strong> Completed &amp; Verified</td>
+        </tr>
+    </table>
+</div>
+
+<h2>1. Aim of the Experiment</h2>
+<p>
+To implement client-server file transfer applications using standard Java Socket Programming for both <strong>Transmission Control Protocol (TCP)</strong> and <strong>User Datagram Protocol (UDP)</strong>, transmit files of varying sizes (100 KB, 1 MB, 5 MB, and 10 MB), measure transmission latency and throughput using high-precision timing, verify end-to-end cryptographic data integrity via SHA-256 digests, and justify which transport protocol is appropriate for reliable file transfer.
+</p>
+
+<h2>2. Theoretical Background</h2>
+<h3>2.1 Transmission Control Protocol (TCP)</h3>
+<p>
+TCP (RFC 793) is a connection-oriented, byte-stream transport layer protocol. Prior to transferring application data, TCP establishes a virtual circuit through a <strong>three-way handshake</strong> (SYN &rarr; SYN-ACK &rarr; ACK). TCP provides strict reliability guarantees through:
+</p>
+<ul>
+    <li><strong>Sequence and Acknowledgement Numbers:</strong> Every payload byte is numbered, enabling cumulative positive acknowledgements.</li>
+    <li><strong>Automatic Repeat reQuest (ARQ):</strong> Lost or corrupted segments trigger automated retransmission upon timeout or triple duplicate ACKs.</li>
+    <li><strong>Sliding-Window Flow Control:</strong> The receiver advertises its available buffer space (Window Size) to ensure the sender does not overrun receiver memory.</li>
+    <li><strong>Congestion Control:</strong> Dynamic window sizing (Slow Start, Congestion Avoidance) prevents network collapse across shared links.</li>
+</ul>
+
+<h3>2.2 User Datagram Protocol (UDP)</h3>
+<p>
+UDP (RFC 768) is a connectionless, datagram-oriented transport protocol. It requires no session handshake and imposes minimal per-packet header overhead (fixed 8 bytes vs 20&ndash;60 bytes in TCP). UDP provides <strong>best-effort delivery</strong>: packets may be lost, duplicated, or delivered out of order.
+</p>
+<p>
+Because UDP preserves packet boundaries rather than offering a stream abstraction, files must be explicitly segmented by the application. To remain within standard Ethernet Maximum Transmission Unit (MTU = 1,500 bytes) and avoid IP-layer fragmentation, the application datagram payload is constrained to <strong>1,024 bytes</strong> with an accompanying 21-byte application metadata header.
+</p>
+
+<h2>3. System Architecture &amp; Packet Specification</h2>
+<p>
+For UDP, an application-layer binary protocol is implemented using <code>ByteBuffer</code>:
+</p>
+<div class="code-box">
++---------------+---------------+--------------------+--------------------+--------------------+
+| Packet Type   | Sequence No.  | Total Packets      | File Size          | Payload Length     |
+| (1 byte)      | (4 bytes int) | (4 bytes int)      | (8 bytes long)     | (4 bytes int)      |
++---------------+---------------+--------------------+--------------------+--------------------+
+| 0             | 1             | 5                  | 9                  | 17               20|
++---------------+---------------+--------------------+--------------------+--------------------+
+| Data Payload (up to 1,024 bytes)                                                             |
++----------------------------------------------------------------------------------------------+
+</div>
+<p>
+<strong>Packet Types:</strong> <code>1: START</code> (metadata with filename), <code>2: DATA</code> (payload chunk with sequence number), <code>3: END</code> (completion marker), <code>4: STATUS_RESP</code> (server feedback on packets received and verified bytes).
+</p>
+
+<div class="page-break"></div>
+
+<h2>4. Algorithm &amp; Implementation Logic</h2>
+
+<h3>4.1 TCP File Transfer Algorithm</h3>
+<ol>
+    <li><strong>Server Setup:</strong> The server instantiates a <code>ServerSocket(port)</code> and blocks on <code>accept()</code>.</li>
+    <li><strong>Client Connection &amp; Metadata:</strong> The client creates a <code>Socket(host, port)</code> and sends the target filename (<code>writeUTF</code>) and file size in bytes (<code>writeLong</code>).</li>
+    <li><strong>Chunk Streaming:</strong> The client reads the source file in 8,192-byte chunks and writes them directly to the socket output stream.</li>
+    <li><strong>Server Reception:</strong> The server streams bytes into <code>FileOutputStream</code> until exactly <code>fileSize</code> bytes have been stored. If premature EOF is encountered, an <code>EOFException</code> is raised.</li>
+    <li><strong>Acknowledgement:</strong> Upon writing all bytes to disk, the server sends <code>"SUCCESS"</code> back to the client. Both endpoints safely terminate sockets.</li>
+</ol>
+
+<h3>4.2 UDP File Transfer Algorithm (Out-of-Order Reassembly)</h3>
+<ol>
+    <li><strong>Packetization:</strong> The client segments the file into chunks of 1,024 bytes, computing total packets N = ceil(fileSize / 1024).</li>
+    <li><strong>Metadata Signal:</strong> The client transmits <code>START</code> datagrams containing filename and total packet count.</li>
+    <li><strong>Datagram Transmission:</strong> The client transmits sequential <code>DATA</code> packets, each labeled with sequence number i in [0, N-1].</li>
+    <li><strong>RandomAccess Reassembly:</strong> The server maintains a <code>boolean[N]</code> mask. When datagram i arrives (even out of order), the server invokes <code>raf.seek((long) i * 1024)</code> and writes the payload at that exact byte offset.</li>
+    <li><strong>Loss &amp; Duplicate Tracking:</strong> Duplicate arrivals are recorded and ignored. Missing packets are calculated as N - uniquePacketsReceived.</li>
+    <li><strong>Completion &amp; Feedback:</strong> Upon receiving <code>END</code> or encountering a read timeout, the server evaluates transfer integrity and transmits a <code>STATUS_RESP</code> datagram containing loss statistics back to the client.</li>
+</ol>
+
+<h2>5. Experimental Setup</h2>
+<ul>
+    <li><strong>Operating System:</strong> Microsoft Windows 11 Home (64-Bit)</li>
+    <li><strong>Java Development Kit:</strong> OpenJDK 21.0.6 (build 21.0.6+-13368085-b895.109)</li>
+    <li><strong>Socket APIs:</strong> <code>java.net.Socket</code>, <code>java.net.ServerSocket</code>, <code>java.net.DatagramSocket</code>, <code>java.net.DatagramPacket</code></li>
+    <li><strong>Network Interface:</strong> Localhost Loopback Interface (<code>127.0.0.1</code>)</li>
+    <li><strong>Test Files Generated:</strong> 100 KB, 1 MB, 5 MB, 10 MB (deterministic binary sequences generated with fixed PRNG seed)</li>
+    <li><strong>Timing Mechanism:</strong> High-precision <code>System.nanoTime()</code> covering network send/receive phases exclusively.</li>
+</ul>
+
+<h2>6. Observation Table</h2>
+<p>
+The table below displays experimental benchmark averages collected over <strong>3 independent trials</strong> per configuration:
+</p>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Protocol</th>
+            <th>File Size</th>
+            <th>Bytes</th>
+            <th>Completed</th>
+            <th>Avg. Time (s)</th>
+            <th>Throughput (MiB/s)</th>
+            <th>Packet Loss</th>
+            <th>SHA-256 Match</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>TCP</strong></td>
+            <td>100 KB</td>
+            <td>102,400</td>
+            <td>3 / 3</td>
+            <td>0.0145 s</td>
+            <td>12.03 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+        <tr>
+            <td><strong>TCP</strong></td>
+            <td>1 MB</td>
+            <td>1,048,576</td>
+            <td>3 / 3</td>
+            <td>0.0134 s</td>
+            <td>75.82 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+        <tr>
+            <td><strong>TCP</strong></td>
+            <td>5 MB</td>
+            <td>5,242,880</td>
+            <td>3 / 3</td>
+            <td>0.0323 s</td>
+            <td>170.82 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+        <tr>
+            <td><strong>TCP</strong></td>
+            <td>10 MB</td>
+            <td>10,485,760</td>
+            <td>3 / 3</td>
+            <td>0.0518 s</td>
+            <td>202.86 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+        <tr>
+            <td><strong>UDP</strong></td>
+            <td>100 KB</td>
+            <td>102,400</td>
+            <td>3 / 3</td>
+            <td>0.0308 s</td>
+            <td>3.20 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+        <tr>
+            <td><strong>UDP</strong></td>
+            <td>1 MB</td>
+            <td>1,048,576</td>
+            <td>3 / 3</td>
+            <td>0.0541 s</td>
+            <td>18.85 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+        <tr>
+            <td><strong>UDP</strong></td>
+            <td>5 MB</td>
+            <td>5,242,880</td>
+            <td>3 / 3</td>
+            <td>0.1052 s</td>
+            <td>47.75 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+        <tr>
+            <td><strong>UDP</strong></td>
+            <td>10 MB</td>
+            <td>10,485,760</td>
+            <td>3 / 3</td>
+            <td>0.1476 s</td>
+            <td>67.85 MiB/s</td>
+            <td>0.00%</td>
+            <td>Verified</td>
+            <td>100% SUCCESS</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<h2>7. Comparative Graphs</h2>
+<div class="chart-container">
+    <img src="throughput.png" alt="Throughput Comparison Graph">
+    <div class="chart-caption">Figure 1: Throughput Comparison (TCP vs. UDP) across file sizes on localhost (Averaged over 3 runs).</div>
+</div>
+
+<div class="chart-container">
+    <img src="transmission_time.png" alt="Transmission Time Graph">
+    <div class="chart-caption">Figure 2: Transmission Time Comparison (TCP vs. UDP) across file sizes on localhost.</div>
+</div>
+
+<h2>8. Experimental Analysis</h2>
+<ol>
+    <li><strong>Transmission Time Characteristics:</strong> Transfer time generally increases with file size, although small measurements can fluctuate because of fixed overhead and timing variability. For small transfers (100 KB vs 1 MB), fixed initialization costs—including socket allocation, thread synchronization, metadata handshakes, and OS buffer priming—form a major fraction of total time. For large transfers (5 MB to 10 MB), data streaming duration dominates.</li>
+    <li><strong>Throughput Scaling:</strong> TCP throughput scaled from <strong>12.03 MiB/s</strong> at 100 KB to <strong>202.86 MiB/s</strong> at 10 MB. This marked improvement is driven by the amortization of startup overhead and TCP's continuous stream pipelining in 8 KB blocks.</li>
+    <li><strong>Syscall and Packetization Overhead:</strong> UDP yielded lower throughput (67.85 MiB/s on 10 MB) compared to TCP (202.86 MiB/s). To transfer 10 MB within safe MTU bounds, UDP required <strong>10,240 individual datagram transmissions</strong> and kernel context switches versus only 1,280 chunk writes for TCP.</li>
+    <li><strong>Integrity and Reliability:</strong> All TCP transfers completed with 100% bit-exact SHA-256 matches. With tuned socket receive buffers (4 MB), UDP transfers also achieved full delivery, but remain vulnerable to kernel buffer drops under unthrottled streaming without an application-level ARQ retransmission protocol.</li>
+</ol>
+
+<h2>9. Result &amp; Conclusion</h2>
+<p>
+The TCP and UDP file transfer systems were successfully designed, implemented, and benchmarked using standard Java socket programming.
+</p>
+<p>
+<strong>Conclusion:</strong> While UDP provides low-latency, lightweight transport suitable for real-time traffic (DNS, audio/video streaming, multiplayer games), it lacks built-in flow control and delivery guarantees. For data transfers requiring bit-exact accuracy and completeness, <strong>TCP is strictly justified and fundamentally superior</strong> due to its robust connection-oriented architecture, automated ARQ retransmissions, in-order packet delivery, and sliding-window flow control.
+</p>
+
+</body>
+</html>

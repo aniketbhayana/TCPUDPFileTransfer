@@ -17,3 +17,4 @@ test-files/*.bin
 .vscode/
 Thumbs.db
 .DS_Store
+*.zip
